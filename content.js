@@ -1,4 +1,4 @@
-function getPageContent() {
+function analyzeArticle() {
   // get all the elements with class "essay-list"
   const essayList = document.querySelectorAll(".essay-list");
   const list = Array.from(essayList);
@@ -8,6 +8,8 @@ function getPageContent() {
     const dataEle = document.createElement("div");
     dataEle.classList.add("data-ele");
     dataEle.style.color = "green";
+    dataEle.style.fontSize = "14px";
+    dataEle.style.display = "flex";
     // handle the data of every essay
     const nums = [];
     for (const item of items) {
@@ -20,24 +22,42 @@ function getPageContent() {
       nums.push(num);
     }
     nums.reverse();
-    genNumCell(nums[1] / nums[0], "阅读/展现比", dataEle);
-    genNumCell(nums[2] / nums[1], "点赞/阅读比", dataEle);
-    genNumCell(nums[3] / nums[1], "评论/阅读比", dataEle);
-    genNumCell(nums[4] / nums[1], "收藏/阅读比", dataEle);
+    genDataEle(nums[1] / nums[0], "阅读/展现比", dataEle);
+    genDataEle(nums[2] / nums[1], "点赞/阅读比", dataEle);
+    genDataEle(nums[3] / nums[1], "评论/阅读比", dataEle);
+    genDataEle(nums[4] / nums[1], "收藏/阅读比", dataEle);
     essay.appendChild(dataEle);
   }
 }
 
-function genNumCell(ratio, label, parent) {
-  const ratioStr = `${(ratio * 100).toFixed(6)}%`;
-  const span = document.createElement("span");
-  span.innerText = `${label}: ${ratioStr}`;
-  span.style.marginRight = "30px";
-  parent.appendChild(span);
+function genDataEle(ratio, label, parent) {
+  const ratioStr = `${(ratio * 100).toFixed(6)}`;
+  const cell = document.createElement("div");
+  cell.style.marginRight = "30px";
+  cell.style.display = "flex";
+  cell.style.alignItems = "center";
+  const labelEle = document.createElement("div");
+  labelEle.innerText = `${label}:`;
+  labelEle.style.opacity = "0.7";
+  labelEle.style.marginRight = "5px";
+
+  const ratioEle = document.createElement("div");
+  ratioEle.innerText = ratioStr;
+  ratioEle.style.fontWeight = "bold";
+
+  const unitEle = document.createElement("div");
+  unitEle.innerText = "%";
+  unitEle.style.opacity = "0.7";
+  unitEle.style.marginLeft = "3px";
+
+  cell.appendChild(labelEle);
+  cell.appendChild(ratioEle);
+  cell.appendChild(unitEle);
+  parent.appendChild(cell);
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === "getContent") {
-    getPageContent();
+  if (request.action === "analyzeArticle") {
+    analyzeArticle();
   }
 });
