@@ -1,8 +1,19 @@
-function analyzeArticle() {
+let isEnabled = true;
+
+chrome.storage.local.get(['enabled'], function(result) {
+    isEnabled = result.enabled !== false;
+});
+
+function analyzeArticleData() {
   // get all the elements with class "essay-list"
   const essayList = document.querySelectorAll(".essay-list");
   const list = Array.from(essayList);
   for (const essay of list) {
+    // Check if the data element already exists
+    if (essay.querySelector('.data-ele')) {
+      continue; // Skip this essay if data is already present
+    }
+
     const infos = essay.querySelectorAll(".infos span");
     const items = Array.from(infos).reverse();
     const dataEle = document.createElement("div");
@@ -55,9 +66,22 @@ function genDataEle(ratio, label, parent) {
   cell.appendChild(unitEle);
   parent.appendChild(cell);
 }
-
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === "analyzeArticle") {
-    analyzeArticle();
-  }
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+    if (request.action === "updateState") {
+        isEnabled = request.enabled;
+        if (isEnabled) {
+            analyzeArticleData();
+        } else {
+            // Remove analysis elements if disabled
+            document.querySelectorAll('.data-ele').forEach(el => el.remove());
+        }
+    } else if (request.action === "pageLoaded") {
+        setTimeout(() => {
+            if (isEnabled) {
+                analyzeArticleData();
+            }
+        }, 1000);
+    } else if (request.action === "manualAnalyze") {
+        analyzeArticleData();
+    }
 });
