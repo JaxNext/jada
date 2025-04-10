@@ -1,4 +1,6 @@
 let isEnabled = true;
+let pollingInterval = null;
+let currentUrl = location.href;
 
 chrome.storage.local.get(['enabled'], function(result) {
     isEnabled = result.enabled !== false;
@@ -66,22 +68,58 @@ function genDataEle(ratio, label, parent) {
   cell.appendChild(unitEle);
   parent.appendChild(cell);
 }
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-    if (request.action === "updateState") {
-        isEnabled = request.enabled;
-        if (isEnabled) {
-            analyzeArticleData();
-        } else {
-            // Remove analysis elements if disabled
-            document.querySelectorAll('.data-ele').forEach(el => el.remove());
-        }
-    } else if (request.action === "pageLoaded") {
-        setTimeout(() => {
-            if (isEnabled) {
-                analyzeArticleData();
-            }
-        }, 1000);
-    } else if (request.action === "manualAnalyze") {
-        analyzeArticleData();
+
+function startPolling() {
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
+  }
+  pollingInterval = setInterval(() => {
+    if (!isEnabled) return;
+    if (currentUrl !== location.href) {
+      currentUrl = location.href;
+      setTimeout(() => analyzeArticleData(), 1000);
+      return;
     }
+    const allEssays = document.querySelectorAll(".essay-list");
+    let hasUnanalyzed = false;
+
+    allEssays.forEach((essay) => {
+      if (!essay.querySelector(".data-ele")) {
+        hasUnanalyzed = true;
+      }
+    });
+
+    if (hasUnanalyzed) {
+      analyzeArticleData();
+    }
+  }, 2000);
+}
+
+function stopPolling() {
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
+    pollingInterval = null;
+  }
+}
+
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+  if (request.action === "updateState") {
+    isEnabled = request.enabled;
+    if (isEnabled) {
+      analyzeArticleData();
+      startPolling();
+    } else {
+      document.querySelectorAll(".data-ele").forEach((el) => el.remove());
+      stopPolling();
+    }
+  } else if (request.action === "pageLoaded") {
+    setTimeout(() => {
+      if (isEnabled) {
+        analyzeArticleData();
+        startPolling();
+      }
+    }, 1000);
+  } else if (request.action === "manualAnalyze") {
+    analyzeArticleData();
+  }
 });
