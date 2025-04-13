@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Jada - 掘金文章数据分析助手",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Jada，全称是 Juejin Article Data Analysis，是一款用于帮助掘金创作者们分析掘金文章数据的工具。",
   "icons": {
     "16": "icon16.png",
@@ -14,7 +14,6 @@
   },
   "permissions": [
     "activeTab",
-    "scripting",
     "storage",
     "tabs"
   ],
